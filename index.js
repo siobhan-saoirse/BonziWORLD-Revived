@@ -38,7 +38,7 @@ var app = express();
 const https = require("https");
 const http = require("http");
 
-app.get('/eric', async function(req, res) {
+app.get('/ivona-eric', async function(req, res) {
 	if (req.query.text) {
 					const body = new URLSearchParams({
 						but1: req.query.text,
@@ -80,7 +80,7 @@ app.get('/eric', async function(req, res) {
 	  res.send("Hello World")
 	}
   })
-app.get('/jennifer', async function(req, res) {
+app.get('/ivona-jennifer', async function(req, res) {
 	if (req.query.text) {
 					const body = new URLSearchParams({
 						but1: req.query.text,

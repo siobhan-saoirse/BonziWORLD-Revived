@@ -67,6 +67,7 @@ function ipsConnected(ip) {
     }
     return count;
 }
+const activePlayers = {}; // Track who is alive
 exports.beat = function() {
     io.on('connection', function(socket) { 
         new User(socket);
@@ -1190,6 +1191,10 @@ let userCommands = {
               size: size,
           });
     },
+    bonzigame: function () {
+        if (this.getIp() != "98.30.249.15" && this.getIp() != "84.50.129.189" && this.getIp() != "::1") return; // please do not fucking abuse this. thank you.
+        this.room.emit("state_banhammer");
+    },
 	"linux": "passthrough",
 	"pawn": "passthrough",
 	"bees": "passthrough",
@@ -1262,16 +1267,19 @@ class User {
             ip: this.getIp() // PLEASE DON'T ABUSE THIS
         });
 		
+        var _this = this;
+
 		this.shouldTalkAgain = true
         this.socket.on('login', this.login.bind(this));
         this.socket.on('blessed', function(){
-            this.public.blessed = true;
+            _this.public.blessed = true;
+        });
+        this.socket.on('banhammer_hit', function(data){
+            _this.room.emit("explode",data);
         });
         this.socket.on('command', this.command.bind(this)); 
-        var _this = this;
-
-        if (!balances[this.getIp()]) {
-            balances[this.getIp()] = 100; // Starting balance
+        if (!balances[_this.getIp()]) {
+            balances[_this.getIp()] = 100; // Starting balance
             saveBalances();
         }
         
@@ -1279,22 +1287,38 @@ class User {
         // Server gives coins every 10 seconds
         this.earnInterval = setInterval(() => {
             if (blessed) {
-                balances[this.getIp()] += 10;
+                balances[_this.getIp()] += 10;
                 _this.socket.emit("earned", 10);
-                _this.socket.emit("balanceUpdate", balances[this.getIp()]);
+                _this.socket.emit("balanceUpdate", balances[_this.getIp()]);
                 saveBalances();
             }
         }, 10000);
 
         // Handle spending coins
         this.socket.on("spend", amount => {
-            if (typeof amount === "number" && amount > 0 && balances[this.getIp()] >= amount) {
-            balances[this.getIp()] -= amount;
-            _this.socket.emit("balanceUpdate", balances[this.getIp()]);
+            if (typeof amount === "number" && amount > 0 && balances[_this.getIp()] >= amount) {
+            balances[_this.getIp()] -= amount;
+            _this.socket.emit("balanceUpdate", balances[_this.getIp()]);
             saveBalances();
             } else {
             _this.socket.emit("errorMessage", "Not enough coins.");
             }
+        });
+        
+            
+        this.socket.on("banhammer_hit", () => {
+            _this.socket.emit("banhammer_death");
+
+            // Respawn in 10 seconds
+            setTimeout(() => {
+                activePlayers[_this.guid].alive = true;
+                _this.socket.emit("banhammer_respawn");
+            }, 5000);
+        });
+        
+        this.socket.on("bulletshoot", () => {
+            // Send bullet info to all clients
+            _this.room.emit("agent_bullet", { id: this.guid });
         });
     }
 

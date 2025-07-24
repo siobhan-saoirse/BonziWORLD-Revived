@@ -1815,7 +1815,7 @@ class Agent {
                                 _this.clearDialog();
                             }
                         } else if (this.userPublic.voice == "eric") {
-                            let url = `https://desktop-assistant-chat.onrender.com/eric?text=${say}`;
+                            let url = `./ivona-eric?text=${say}`;
                             this.audio = new Audio(url);
                             this.audio.playbackRate = this.playbackRate || 1;
                             this.audio.preservesPitch = false;
@@ -1832,7 +1832,7 @@ class Agent {
                             }
                         }
                         else if (this.userPublic.voice == "jennifer") {
-                            let url = `https://desktop-assistant-chat.onrender.com/jennifer?text=${say}`;
+                            let url = `./ivona-jennifer?text=${say}`;
                             this.audio = new Audio(url);
                             this.audio.playbackRate = this.playbackRate || 1;
                             this.audio.preservesPitch = false;
@@ -1895,7 +1895,7 @@ class Agent {
                             }
                         }
                         else if (this.userPublic.voice == "eric") {
-                            let url = `https://desktop-assistant-chat.onrender.com/eric?text=${say}`;
+                            let url = `./ivona-eric?text=${say}`;
                             this.audio = new Audio(url);
                             this.audio.playbackRate = this.playbackRate || 1;
                             this.audio.preservesPitch = false;
@@ -2490,6 +2490,7 @@ class Agent {
         explosion.style.top = this.y + "px";
         document.body.appendChild(explosion);
         //this.element.style.zIndex = "999999"; // show above chat log
+        var _this = this;
         let rot = 0;
         let posX = this.x;
         let posY = this.y;
@@ -2522,10 +2523,10 @@ class Agent {
             AgentHandler.needsUpdate = true;
         }, 33);
         setTimeout(function(){
-            this.element.style.transform = ``;
-            this.sprite.x = posX;
-            this.sprite.y = posY;
-            this.sprite.rotation = 0;
+            clearInterval(interval);
+            _this.sprite.x = posX;
+            _this.sprite.y = posY;
+            _this.sprite.rotation = 0;
         }, 5000)
     }
     animate() {
@@ -7022,6 +7023,252 @@ function errorFatal() {
     }
 }
 
+const sfx = {
+    shoot: new Audio("../sfx/shoot.wav"),
+    explode: new Audio("../sfx/explode.wav"),
+    evilLaugh: new Audio("../sfx/evil_laugh.wav"),
+    spellStart: new Audio("../sfx/spell_start.wav"),
+    banThrow: new Audio("../sfx/banhammer_throw.wav"),
+    bounce: new Audio("../sfx/boing.wav")
+};
+
+function startBanhammerMode() {
+    let bossHP = 20;
+    let spellCardActive = false;
+    const bullets = [];
+    const canvas = document.createElement("canvas");
+    canvas.id = "banhammer-canvas";
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    canvas.style.cssText = `
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        pointer-events: none;
+        z-index: 9999;
+    `;
+    document.body.appendChild(canvas);
+    const ctx = canvas.getContext("2d");
+
+    const evilImg = new Image();
+    evilImg.src = "../img/evil.png";
+
+    const hammerImg = new Image();
+    hammerImg.src = "../img/banhammer.png";
+
+    const explosionImg = new Image();
+    explosionImg.src = "../img/explosion.png"; // Make sure this exists
+
+    const hammers = [];
+    let evilX = canvas.width / 2 - 128;
+    let evilY = 0;
+    let evilDir = 3;
+
+    sfx.evilLaugh.play();
+    function spawnHammers() {
+        for (let i = 0; i < 3; i++) {
+            hammers.push({
+                x: evilX + 128 + (Math.random() * 80 - 40),
+                y: evilY + 180,
+                speed: 5 + Math.random() * 4,
+                size: 64,
+                angle: Math.random() * Math.PI * 2,
+                spin: (Math.random() * 0.1 + 0.05) * (Math.random() < 0.5 ? 1 : -1)
+            });
+            sfx.banThrow.currentTime = 0;
+            sfx.banThrow.play();
+        }
+    }
+
+    const spawnInterval = setInterval(spawnHammers, 400);
+
+    function update() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Move evil bonzi
+        evilX += evilDir;
+        if (evilX < 0 || evilX > canvas.width - 256) evilDir *= -1;
+        ctx.drawImage(evilImg, evilX, evilY, 256, 256);
+
+        const agent = agents?.[bonzi_guid];
+        if (!agent) return requestAnimationFrame(update);
+
+        for (let i = hammers.length - 1; i >= 0; i--) {
+            const h = hammers[i];
+            h.y += h.speed;
+            h.angle += h.spin;
+
+            ctx.save();
+            ctx.translate(h.x + h.size / 2, h.y + h.size / 2);
+            ctx.rotate(h.angle);
+            ctx.drawImage(hammerImg, -h.size / 2, -h.size / 2, h.size, h.size);
+            ctx.restore();
+
+            // Collision
+            const ax = agent.x;
+            const ay = agent.y;
+            const aw = 200;
+            const ah = 160;
+
+            const hit = h.x + h.size > ax && h.x < ax + aw && h.y + h.size > ay && h.y < ay + ah;
+            if (hit) {
+                // 💥 Explosion
+                if (!agent._hasExploded) {
+                    agent._hasExploded = true;
+                    sfx.explode.play();
+                    socket.emit("banhammer_hit",bonzi_guid);
+                }
+            }
+
+            if (h.y > canvas.height + 100) hammers.splice(i, 1);
+        }
+
+        // Bullet update + boss collision
+        for (let i = bullets.length - 1; i >= 0; i--) {
+            const b = bullets[i];
+            b.y -= b.speed;
+
+            // Draw bullet
+            ctx.fillStyle = "cyan";
+            ctx.beginPath();
+            ctx.arc(b.x, b.y, b.size / 2, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Boss collision
+            if (
+                b.x > evilX && b.x < evilX + 256 &&
+                b.y > evilY && b.y < evilY + 256 &&
+                !spellCardActive
+            ) {
+                bullets.splice(i, 1);
+                bossHP--;
+
+                if (bossHP <= 0 && !spellCardActive) {
+                    spellCardActive = true;
+                    startSpellCard();
+                }
+
+                continue;
+            }
+
+            // Out of bounds
+            if (b.y < -20) bullets.splice(i, 1);
+        }
+        requestAnimationFrame(update);
+    }
+    function startSpellCard() {
+        let spellHammers = [];
+
+        sfx.spellStart.currentTime = 0;
+        sfx.spellStart.play();
+        function spawnSpellHammer() {
+            spellHammers.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height / 2,
+                vx: (Math.random() * 6 - 3),
+                vy: (Math.random() * 6 - 3),
+                size: 64,
+                angle: 0,
+                spin: Math.random() * 0.2 - 0.1
+            });
+        }
+
+        const spellInterval = setInterval(() => {
+            for (let i = 0; i < 4; i++) spawnSpellHammer();
+        }, 300);
+
+        const spellDuration = 20000; // 20s spell
+        setTimeout(() => {
+            clearInterval(spellInterval);
+            spellCardActive = false;
+            bossHP = 20; // Next phase?
+            spellHammers = [];
+        }, spellDuration);
+
+        // Add spell hammers to update loop
+        function spellUpdate() {
+            if (!spellCardActive) return;
+
+            spellHammers.forEach((h, i) => {
+                h.x += h.vx;
+                h.y += h.vy;
+                h.angle += h.spin;
+
+                // Bounce off walls
+                if (h.x < 0 || h.x > canvas.width - h.size) h.vx *= -1;
+                if (h.y < 0 || h.y > canvas.height - h.size) h.vy *= -1;
+
+                // Draw
+                ctx.save();
+                ctx.translate(h.x + h.size / 2, h.y + h.size / 2);
+                ctx.rotate(h.angle);
+                ctx.drawImage(hammerImg, -h.size / 2, -h.size / 2, h.size, h.size);
+                ctx.restore();
+
+                // Hit agent?
+                const agent = agents[bonzi_guid];
+                if (!agent) return;
+
+                if (
+                    h.x + h.size > agent.x &&
+                    h.x < agent.x + 200 &&
+                    h.y + h.size > agent.y &&
+                    h.y < agent.y + 160
+                ) {
+                    if (typeof explode === "function") agent[bonzi_guid].explode();
+                    socket.emit("banhammer_hit",bonzi_guid);
+                    spellCardActive = false;
+                }
+            });
+
+            requestAnimationFrame(spellUpdate);
+        }
+        requestAnimationFrame(spellUpdate);
+    }
+    let loaded = 0;
+    [evilImg, hammerImg, explosionImg].forEach(img => {
+        img.onload = () => {
+            loaded++;
+            if (loaded === 3) update();
+        };
+    });
+
+    document.addEventListener("keydown", (e) => {
+        if (e.code === "Space") {
+            socket.emit("bulletshoot");
+            sfx.shoot.currentTime = 0;
+            sfx.shoot.play();
+        }
+    });
+    socket.on("agent_bullet", (data) => {
+        const agent = agents[data.id];
+        if (!agent) return;
+
+        bullets.push({
+            x: agent.x + 100,
+            y: agent.y,
+            speed: 8,
+            size: 16,
+            id: data.id
+        });
+            sfx.shoot.currentTime = 0;
+            sfx.shoot.play();
+    });
+    socket.on("explode", (data) => {
+        const agent = agents[data]
+        if (!agent) return;
+                    agent._hasExploded = true;
+                    sfx.explode.play();
+                    agent.explode();
+    });
+}
+
+
+var localAgent = null;
+function hideUI() {
+    $("#top_bar").hide();
+    $("#sub_top_bar").hide();
+}
 function setup() {
     $.contextMenu({
 		selector: "#content",
@@ -7476,6 +7723,21 @@ function setup() {
 
     socket.on("updateGuid", function (data) {
         window.bonzi_guid = data.guid;
+            
+        localAgent = agents[bonzi_guid];
+        socket.on("state_banhammer", () => {
+            startBanhammerMode();
+        });
+        
+        socket.on("banhammer_death", () => {
+            localAgent.run = false;
+            $(localAgent.selElement).css("transition", "all 0.5s ease").css("transform", "translateY(-1000px)");
+        });
+
+        socket.on("banhammer_respawn", () => {
+            $(localAgent.selElement).css("transition", "").css("transform", "");
+            localAgent.run = true;
+        });
     });
     
     socket.on("updateAll", function (data) {
@@ -7835,6 +8097,8 @@ function setup() {
             audio2.play();
         }
         agent.explode();
+        sfx.explode.currentTime = 0;
+        sfx.explode.play();
     });
 
     socket.on("nuked", () => {
