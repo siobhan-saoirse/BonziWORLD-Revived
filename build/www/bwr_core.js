@@ -276,8 +276,8 @@ function bonzilog(id, name, html, color, text, single) {
     if (color) {
         let [baseColor, ...hats] = color.split(" ");
         icon = `<div class="log_icon">
-            <img class="color" src="img/pfp/${baseColor}.webp">
-            ${hats.map(hat => `<img class="hat" src="img/pfp/${hat}.webp">`).join(" ")
+            <img class="color" src="img/pfp/${baseColor}.png">
+            ${hats.map(hat => `<img class="hat" src="img/pfp/${hat}.png">`).join(" ")
             }
         </div>`;
     } else {
