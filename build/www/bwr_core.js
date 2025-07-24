@@ -276,8 +276,9 @@ function bonzilog(id, name, html, color, text, single) {
     if (color) {
         let [baseColor, ...hats] = color.split(" ");
         icon = `<div class="log_icon">
-            <img class="color" src="img/pfp/${baseColor}.png">
-            ${hats.map((hat) => `<img class="hat" src="img/pfp/${hat}.png">`).join(" ")}
+            <img class="color" src="img/pfp/${baseColor}.webp">
+            ${hats.map(hat => `<img class="hat" src="img/pfp/${hat}.webp">`).join(" ")
+            }
         </div>`;
     } else {
         icon = `<div class="log_left_spacing"></div>`;
@@ -285,9 +286,7 @@ function bonzilog(id, name, html, color, text, single) {
     let thisUser = `${id};${name};${color}`;
     if (thisUser !== lastUser || single) {
         let timeString = `<span class="log_time">${time()}</span>`;
-        chat_log_content.insertAdjacentHTML(
-            "beforeend",
-            `
+        chat_log_content.insertAdjacentHTML("beforeend", `
             <hr>
             <div class="log_message">
                 ${icon}
@@ -296,21 +295,26 @@ function bonzilog(id, name, html, color, text, single) {
                     <span><b>${nmarkup(name)}</b> ${name ? timeString : ""}</span>
                     <div class="log_message_content">${html} ${name ? "" : timeString}</div> 
                 </div>
-            </div>`
-        );
+            </div>`);
         lastUser = single ? "" : thisUser;
     } else {
-        chat_log_content.insertAdjacentHTML(
-            "beforeend",
-            `
+        chat_log_content.insertAdjacentHTML("beforeend", `
             <div class="log_message log_continue">
                 <div class="reply"></div>
                 <div class="log_left_spacing"></div>
                 <div class="log_message_cont">
                     <div class="log_message_content">${html}</div>
                 </div>
-            </div>`
-        );
+            </div>`);
+    }
+    chat_log_content.lastChild.querySelector(".reply").onclick = () => {
+        quote = { name, text: text };
+        talkcard.innerHTML = `Replying to ${nmarkup(name)}`;
+        chat_message.focus();
+        talkcard.hidden = false;
+    };
+    if (scrolled) {
+        chat_log_content.scrollTop = chat_log_content.scrollHeight;
     }
 }
 let lastZ = 1;
@@ -610,14 +614,6 @@ class Agent {
                             callback: () => {
                                 socket.emit("command", {
                                     list: ["nuke", this.id],
-                                });
-                            },
-                        },
-                        bless: {
-                            name: "Bless",
-                            callback: () => {
-                                socket.emit("command", {
-                                    list: ["bless", this.id],
                                 });
                             },
                         }

@@ -66,7 +66,7 @@ app.get('/eric', async function(req, res) {
 								const end = html.indexOf("mp3", beg) + 3;
 								const sub = html.subarray(beg, end).toString();
 	
-								https.get(`https://readloud.net${sub}`, (r2) => {
+								https.get(`https://readloud.net${sub}`, async (r2) => {
 									await r2.pipe(res);
 									return res.writeHead(200, {
 									'Content-Type': 'audio/mp3'
@@ -108,7 +108,7 @@ app.get('/jennifer', async function(req, res) {
 								const end = html.indexOf("mp3", beg) + 3;
 								const sub = html.subarray(beg, end).toString();
 	
-								https.get(`https://readloud.net${sub}`, (r2) => {
+								https.get(`https://readloud.net${sub}`, async (r2) => {
 									await r2.pipe(res);
 									return res.writeHead(200, {
 									'Content-Type': 'audio/mp3'
