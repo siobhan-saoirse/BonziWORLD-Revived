@@ -1,0 +1,3 @@
+Epic Sekret list of TODOs:
+1. Add a condition where if kicked, instead of "left the room", just do "got kicked".
+2. Add a admin anonymity mode so their name wouldn't be shown on the kicked by thing. Could be "Anonymous administrator", or i dunno really.
