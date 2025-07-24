@@ -1,8 +1,6 @@
-# BonziWORLD Patched
+# BonziWORLD Revived
 
-This respository is a fork of the [original](https://github.com/heyjoeway/BonziWORLD). It will be updated frequently to be fully secure and fix problems with either the server or the client.
-
-This project was discontinued by heyjoeway due to his time being taken up by other responsibilities.
+After 2 years, BWR has finally returned with better, but still pretty jank code.
 
 All the source code for the server and client is publically available here. If you want to run your own BonziWORLD, by all means go ahead. Do whatever you'd like with this code. Just try to put me somewhere in the credits.
 
@@ -16,21 +14,12 @@ All the source code for the server and client is publically available here. If y
 ## Setup
 In a terminal/command prompt, navigate to where you'd like BonziWORLD to be placed and run the following:
 ```
-git clone -b 1.6.0-pre-shutdown https://github.com/Seamusmario/BonziWORLD-patched
-cd BonziWORLD-patched
-```
-
-### Client
-```
-cd src
-npm install
-grunt build_www
-cd ..
+git clone -b 1.6.0-pre-shutdown https://github.com/siobhan-saoirse/BonziWORLD-Revived
+cd BonziWORLD-Revived
 ```
 
 ### Server
 ```
-cd server
 npm install
 node index.js
 ```
