@@ -7043,7 +7043,7 @@ const sfx = {
 };
 
 function startBanhammerMode() {
-    let bossHP = 500;
+    let bossHP = 200;
     let spellCardActive = false;
     const bullets = [];
     const canvas = document.createElement("canvas");
@@ -7091,7 +7091,7 @@ function startBanhammerMode() {
         }
     }
 
-    const spawnInterval = setInterval(spawnHammers, 400);
+    const spawnInterval = setInterval(spawnHammers, 500);
 
     function update() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -7100,9 +7100,29 @@ function startBanhammerMode() {
         evilX += evilDir;
         if (evilX < 0 || evilX > canvas.width - 256) evilDir *= -1;
         ctx.drawImage(evilImg, evilX, evilY, 256, 256);
+        
 
         const agent = agents?.[bonzi_guid];
         if (!agent) return requestAnimationFrame(update);
+
+            // Collision
+            const ax = agent.x;
+            const ay = agent.y;
+            const aw = 200;
+            const ah = 160;
+
+            const hit = evilX + 256 > ax && evilX < ax + aw && evilY + 256 > ay && evilY < ay + ah;
+            if (hit) {
+                // 💥 Explosion
+                if (!agent._hasExploded) {
+                    agent._hasExploded = true;
+                    sfx.explode.play();
+                    socket.emit("banhammer_hit",bonzi_guid);
+                    setTimeout(function(){
+                        agent._hasExploded = false;
+                    },5000)
+                }
+            }
 
         for (let i = hammers.length - 1; i >= 0; i--) {
             const h = hammers[i];
@@ -7187,9 +7207,12 @@ function startBanhammerMode() {
 
     document.addEventListener("keydown", (e) => {
         if (e.code === "Space") {
-            socket.emit("bulletshoot");
-            sfx.shoot.currentTime = 0;
-            sfx.shoot.play();
+            const agent = agents?.[bonzi_guid];
+            if (!agent._hasExploded) {
+                socket.emit("bulletshoot");
+                sfx.shoot.currentTime = 0;
+                sfx.shoot.play();
+            }
         }
     });
     socket.on("agent_bullet", (data) => {
@@ -7205,14 +7228,6 @@ function startBanhammerMode() {
         });
             sfx.shoot.currentTime = 0;
             sfx.shoot.play();
-    });
-    socket.on("explode", (data) => {
-        const agent = agents[data]
-        if (!agent) return;
-                    agent._hasExploded = true;
-                    sfx.explode.play();
-                    agent.explode();
-        evilBonziSpeak("hahahahahahaha!")
     });
 }
 
@@ -7249,6 +7264,14 @@ function setup() {
         }, 500);
     });
 	
+    socket.on("explode", (data) => {
+        const agent = agents[data]
+        if (!agent) return;
+                    agent._hasExploded = true;
+                    sfx.explode.play();
+                    agent.explode();
+        evilBonziSpeak("hahahahahahaha!")
+    });
     socket.on("balanceUpdate", balance => {
       $(".coin_count").text(balance)
     });

@@ -1168,7 +1168,7 @@ let userCommands = {
           });
       } else {
         // fuck it. lol
-          this.socket.emit("move", {
+          this.room.emit("move", {
               guid: this.guid,
               posX: x,
               posY: y,
@@ -1310,8 +1310,6 @@ class User {
             _this.socket.emit("earned", 100);
             _this.socket.emit("balanceUpdate", balances[_this.getIp()]);
         })
-        this.socket.on("banhammer_hit", () => {
-        });
         
         this.socket.on("bulletshoot", () => {
             // Send bullet info to all clients
