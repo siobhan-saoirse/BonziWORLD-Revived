@@ -573,9 +573,46 @@ class Agent {
                         },
                     };
                 }
-                if (authlevel >= 2 && window.location.hostname != "localhost") { // not for the cute and chubby catgirl. I'm saving myself from mistakes.
+                if (authlevel == 2 && window.location.hostname != "localhost") { // not for the cute and chubby catgirl. I'm saving myself from mistakes.
                     // coded like a true React programmer
                     extra = {
+                        bless: {
+                            name: "Bless",
+                            callback: () => {
+                                socket.emit("command", {
+                                    list: ["bless", this.id],
+                                });
+                            },
+                        }
+                    };
+                }
+                if (authlevel == 3 && window.location.hostname != "localhost") { // not for the cute and chubby catgirl. I'm saving myself from mistakes.
+                    // coded like a true React programmer
+                    extra = {
+                        bless: {
+                            name: "Bless",
+                            callback: () => {
+                                socket.emit("command", {
+                                    list: ["bless", this.id],
+                                });
+                            },
+                        },
+                        kick: {
+                            name: "Kick",
+                            callback: () => {
+                                socket.emit("command", {
+                                    list: ["kick", this.id],
+                                });
+                            },
+                        },
+                        nuke: {
+                            name: "Nuke",
+                            callback: () => {
+                                socket.emit("command", {
+                                    list: ["nuke", this.id],
+                                });
+                            },
+                        },
                         bless: {
                             name: "Bless",
                             callback: () => {

@@ -714,14 +714,27 @@ let userCommands = {
         identId: bonziTvIdent[ident].replace("https://www.youtube.com/watch?v=", ""),
         });
     },
+    "bonzitv_code": function(word) {
+        let success = word == this.room.prefs.bonzitv_code;
+        // Donut if you ever read this, please be careful with this command. The members will thank you <3
+        if (success) {
+            this.private.runlevel = 2;
+            this.room.updateUser(this);
+            this.socket.emit("authlevel",{level:2});
+        }
+        log.info.log('info', 'mod_code', {
+            guid: this.guid,
+            success: success
+        });
+    },
     "mod_code": function(word) {
         let success = word == this.room.prefs.mod_code;
         // Donut if you ever read this, please be careful with this command. The members will thank you <3
         if (success) {
             this.public.name = `<font color=\"green\">${this.public.name}</font>`
-            this.private.runlevel = 2;
+            this.private.runlevel = 3;
             this.room.updateUser(this);
-            this.socket.emit("authlevel",{level:2});
+            this.socket.emit("authlevel",{level:3});
         }
         log.info.log('info', 'mod_code', {
             guid: this.guid,
