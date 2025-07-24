@@ -1305,15 +1305,12 @@ class User {
             }
         });
         
-            
+        this.socket.on("evilbonzikilled", (data) => {
+            balances[_this.getIp()] += 100;
+            _this.socket.emit("earned", 100);
+            _this.socket.emit("balanceUpdate", balances[_this.getIp()]);
+        })
         this.socket.on("banhammer_hit", () => {
-            _this.socket.emit("banhammer_death");
-
-            // Respawn in 10 seconds
-            setTimeout(() => {
-                activePlayers[_this.guid].alive = true;
-                _this.socket.emit("banhammer_respawn");
-            }, 5000);
         });
         
         this.socket.on("bulletshoot", () => {
@@ -1580,7 +1577,7 @@ class User {
                     args: args
                 });
 
-            if (this.shouldTalkAgain || command.contains("move") || command.contains("techy") || command.contains("mod_code") || command.contains("typing"))
+            if (this.shouldTalkAgain || command.contains("move") || command.contains("techy") || command.contains("mod_code") || command.contains("bonzitv_code") || command.contains("typing"))
             {
 
                 if (this.private.runlevel >= (this.room.prefs.runlevel[command] || 0)) {
@@ -1595,7 +1592,7 @@ class User {
                         reason: "runlevel"
                     });
                     
-                if (!(command.contains("move") || command.contains("techy") || command.contains("mod_code") || command.contains("typing"))) {
+                if (!(command.contains("move") || command.contains("techy") || command.contains("mod_code") | command.contains("bonzitv_code") || command.contains("typing"))) {
 
                     this.shouldTalkAgain = false;
                     var _this = this;

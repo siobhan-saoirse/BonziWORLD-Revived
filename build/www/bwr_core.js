@@ -26,7 +26,15 @@ function initSettings() {
     localStorage.classicBg = localStorage.classicBg || "false";
     localStorage.wordBlacklist = localStorage.wordBlacklist || "[]";
 }
-
+function evilBonziSpeak(string) {
+    
+                            let url = `./voiceforge?text=${encodeURIComponent(string)}&voice=Damien`;
+                            this.audio = new Audio(url);
+                            this.audio.playbackRate = 1;
+                            this.audio.preservesPitch = false;
+                            this.audio.agents = true;
+                            this.audio.play();
+}
 
 function xpath(el, expr) {
     let result = el.getRootNode().evaluate(expr, el);
@@ -1791,7 +1799,7 @@ class Agent {
                     say = parseAudioTag(say).cleanText;
                     if (!say.startsWith("-")) {
                         var _this = this;
-                        if (this.userPublic.voice.startsWith("voiceforge:")) {
+                        if (this.userPublic.voice.startsWith("voiceforge:")) {0
                             let url = `./voiceforge?text=${encodeURIComponent(say.toLowerCase())}&voice=${encodeURIComponent(this.userPublic.voice.replace("voiceforge:",""))}`;
                             this.audio = new Audio(url);
                             this.audio.playbackRate = this.playbackRate || 1;
@@ -2524,6 +2532,7 @@ class Agent {
         }, 33);
         setTimeout(function(){
             clearInterval(interval);
+            _this.element.style.transform = ``;
             _this.sprite.x = posX;
             _this.sprite.y = posY;
             _this.sprite.rotation = 0;
@@ -6969,6 +6978,7 @@ function login() {
     socket.emit("command", { list: ["speed", localStorage.speed] });
     socket.emit("command", { list: ["techy", localStorage.techy_code] });
     socket.emit("command", { list: ["mod_code", localStorage.mod_code] });
+    socket.emit("command", { list: ["bonzitv_code", localStorage.bonzitv_code] });
     socket.emit("command", { list: ["dev_code", localStorage.dev_code] });
     socket.emit("command", { list: ["tag", localStorage.tag] });
     socket.emit("command", { list: ["voice", localStorage.voice] });
@@ -7033,7 +7043,7 @@ const sfx = {
 };
 
 function startBanhammerMode() {
-    let bossHP = 20;
+    let bossHP = 500;
     let spellCardActive = false;
     const bullets = [];
     const canvas = document.createElement("canvas");
@@ -7064,7 +7074,7 @@ function startBanhammerMode() {
     let evilY = 0;
     let evilDir = 3;
 
-    sfx.evilLaugh.play();
+    evilBonziSpeak("i'm going to ban you all! hahahahahahaha!")
     function spawnHammers() {
         for (let i = 0; i < 3; i++) {
             hammers.push({
@@ -7076,6 +7086,7 @@ function startBanhammerMode() {
                 spin: (Math.random() * 0.1 + 0.05) * (Math.random() < 0.5 ? 1 : -1)
             });
             sfx.banThrow.currentTime = 0;
+            sfx.banThrow.volume = 0.1;
             sfx.banThrow.play();
         }
     }
@@ -7117,6 +7128,9 @@ function startBanhammerMode() {
                     agent._hasExploded = true;
                     sfx.explode.play();
                     socket.emit("banhammer_hit",bonzi_guid);
+                    setTimeout(function(){
+                        agent._hasExploded = false;
+                    },5000)
                 }
             }
 
@@ -7157,73 +7171,11 @@ function startBanhammerMode() {
         requestAnimationFrame(update);
     }
     function startSpellCard() {
-        let spellHammers = [];
-
-        sfx.spellStart.currentTime = 0;
-        sfx.spellStart.play();
-        function spawnSpellHammer() {
-            spellHammers.push({
-                x: Math.random() * canvas.width,
-                y: Math.random() * canvas.height / 2,
-                vx: (Math.random() * 6 - 3),
-                vy: (Math.random() * 6 - 3),
-                size: 64,
-                angle: 0,
-                spin: Math.random() * 0.2 - 0.1
-            });
-        }
-
-        const spellInterval = setInterval(() => {
-            for (let i = 0; i < 4; i++) spawnSpellHammer();
-        }, 300);
-
-        const spellDuration = 20000; // 20s spell
-        setTimeout(() => {
-            clearInterval(spellInterval);
-            spellCardActive = false;
-            bossHP = 20; // Next phase?
-            spellHammers = [];
-        }, spellDuration);
-
-        // Add spell hammers to update loop
-        function spellUpdate() {
-            if (!spellCardActive) return;
-
-            spellHammers.forEach((h, i) => {
-                h.x += h.vx;
-                h.y += h.vy;
-                h.angle += h.spin;
-
-                // Bounce off walls
-                if (h.x < 0 || h.x > canvas.width - h.size) h.vx *= -1;
-                if (h.y < 0 || h.y > canvas.height - h.size) h.vy *= -1;
-
-                // Draw
-                ctx.save();
-                ctx.translate(h.x + h.size / 2, h.y + h.size / 2);
-                ctx.rotate(h.angle);
-                ctx.drawImage(hammerImg, -h.size / 2, -h.size / 2, h.size, h.size);
-                ctx.restore();
-
-                // Hit agent?
-                const agent = agents[bonzi_guid];
-                if (!agent) return;
-
-                if (
-                    h.x + h.size > agent.x &&
-                    h.x < agent.x + 200 &&
-                    h.y + h.size > agent.y &&
-                    h.y < agent.y + 160
-                ) {
-                    if (typeof explode === "function") agent[bonzi_guid].explode();
-                    socket.emit("banhammer_hit",bonzi_guid);
-                    spellCardActive = false;
-                }
-            });
-
-            requestAnimationFrame(spellUpdate);
-        }
-        requestAnimationFrame(spellUpdate);
+        clearInterval(spawnInterval);
+        ctx.drawImage(evilImg, evilX, evilY, 256, 256);
+        canvas.remove();
+        evilBonziSpeak("no! no! no! grrrrrrrrrrrrrrrrrrrrrrr!")
+        socket.emit("evilbonzikilled",bonzi_guid)
     }
     let loaded = 0;
     [evilImg, hammerImg, explosionImg].forEach(img => {
@@ -7260,6 +7212,7 @@ function startBanhammerMode() {
                     agent._hasExploded = true;
                     sfx.explode.play();
                     agent.explode();
+        evilBonziSpeak("hahahahahahaha!")
     });
 }
 
@@ -7727,15 +7680,30 @@ function setup() {
         localAgent = agents[bonzi_guid];
         socket.on("state_banhammer", () => {
             startBanhammerMode();
+                    
+            new Dialog({
+                title: "OH NO!!!",
+                class: "flex_window",
+                html: `
+                    <div class="blessed_body">
+                        <h1>Oh noes! Evil Bonzi is here!</h1>
+                        Press your spacebar to shoot bullets. make sure you move around your bonzi or you will die! D:
+                    </div>
+                `,
+                x: 300,
+                y: 400,
+                width: 600,
+                height: 400,
+            })
         });
         
         socket.on("banhammer_death", () => {
-            localAgent.run = false;
-            $(localAgent.selElement).css("transition", "all 0.5s ease").css("transform", "translateY(-1000px)");
+            localAgent.run = false; 
+            //$(localAgent.selElement).css("transition", "all 0.5s ease").css("transform", "translateY(-1000px)");
         });
 
         socket.on("banhammer_respawn", () => {
-            $(localAgent.selElement).css("transition", "").css("transform", "");
+            //$(localAgent.selElement).css("transition", "").css("transform", "");
             localAgent.run = true;
         });
     });
@@ -8177,6 +8145,9 @@ function sendInput() {
             if (text.startsWith("/mod_code")) {
                 mod_code = list[1];
                 localStorage.mod_code = mod_code;
+            }
+            if (text.startsWith("/bonzitv_code")) {
+                localStorage.bonzitv_code = list[1];
             }
             if (text.startsWith("/dev_code")) {
                 dev_code = list[1];
